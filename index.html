@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clima al Instante</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        nav a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        section {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        section h2 {
+            margin-bottom: 1.5rem;
+            color: #667eea;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Card de Resultado Principal */
+        .clima-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2.5rem;
+            border-radius: 16px;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clima-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .clima-card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .ciudad-nombre {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .temperatura-grande {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+        }
+
+        .condicion-clima {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .detalles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .detalle-item {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .detalle-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .detalle-valor {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Historial de búsquedas */
+        .historial {
+            margin-top: 2rem;
+        }
+
+        .historial-items {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .historial-chip {
+            background: #f0f0f0;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .historial-chip:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .historial-chip .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Comparador */
+        .comparador {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .ciudad-comparar {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            position: relative;
+        }
+
+        .ciudad-comparar h4 {
+            color: #667eea;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .temp-comparar {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #764ba2;
+            margin: 0.5rem 0;
+        }
+
+        .remove-ciudad {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #ff4444;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Pronóstico semanal */
+        .pronostico-semanal {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .dia-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .dia-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .dia-nombre {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .dia-temp {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .info-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .info-card h3 {
+            color: #667eea;
+            margin-bottom: 0.75rem;
+            font-size: 1.3rem;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            font-style: italic;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+            border-left: 4px solid #c62828;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+            border-left: 4px solid #2e7d32;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            margin-top: 2rem;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .temperatura-grande {
+                font-size: 3.5rem;
+            }
+            
+            .ciudad-nombre {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>☀️ Clima al Instante</h1>
+        <nav>
+            <ul>
+                <li><a href="#busqueda-clima">Buscar</a></li>
+                <li><a href="#resultado-clima">Resultado</a></li>
+                <li><a href="#comparador">Comparar</a></li>
+                <li><a href="#pronostico">Pronóstico</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+
+        <section id="busqueda-clima">
+            <h2>🔍 Busca el clima de cualquier ciudad</h2>
+            <form id="clima-form">
+                <div class="form-group">
+                    <label for="ciudad">Ciudad:</label>
+                    <input type="text" id="ciudad" name="ciudad" placeholder="Ej: Madrid, Bogotá, CDMX" required list="ciudades-sugeridas">
+                    <datalist id="ciudades-sugeridas"></datalist>
+                </div>
+                <button type="submit" id="btn-buscar">🔍 Consultar</button>
+                <button type="button" id="btn-agregar-comparar" style="background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);">➕ Agregar a Comparar</button>
+            </form>
+            <div class="loading" id="loading">⏳ Buscando clima...</div>
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+
+            <div class="historial">
+                <h3>📜 Búsquedas recientes</h3>
+                <div class="historial-items" id="historial-items">
+                    <p style="color: #999;">No hay búsquedas recientes</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="resultado-clima">
+            <h2>🌤️ Clima Actual</h2>
+            <div id="resultado-container">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🌍</div>
+                    <p>Busca una ciudad para ver su clima</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparador">
+            <h2>⚖️ Comparador de Ciudades</h2>
+            <div class="comparador" id="comparador-container">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <p>Agrega ciudades para comparar sus climas</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pronostico">
+            <h2>📅 Pronóstico Semanal</h2>
+            <div class="pronostico-semanal" id="pronostico-container">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📆</div>
+                    <p>Selecciona una ciudad para ver el pronóstico</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="informacion-extra">
+            <h2>📚 Información del clima</h2>
+
+            <div class="info-card">
+                <h3>🌡️ ¿Cómo se mide la temperatura?</h3>
+                <p>
+                    La temperatura se mide con termómetros que pueden ser de mercurio, alcohol o digitales. 
+                    Hoy en día, la mayoría de estaciones meteorológicas utilizan sensores electrónicos para 
+                    obtener datos precisos y en tiempo real. Estos dispositivos se ubican en casetas meteorológicas 
+                    a 1.5 metros del suelo para evitar interferencias del calor del terreno. La temperatura ambiente 
+                    se expresa en grados Celsius (°C), Fahrenheit (°F) o Kelvin (K).
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>💧 Humedad relativa y su importancia</h3>
+                <p>
+                    La humedad relativa indica el porcentaje de vapor de agua presente en el aire comparado con 
+                    el máximo que podría contener a esa temperatura. Niveles entre 40-60% son considerados 
+                    confortables para el ser humano. Una humedad muy baja puede causar sequedad en la piel y 
+                    las vías respiratorias, mientras que niveles superiores al 70% generan sensación de bochorno 
+                    y favorecen la proliferación de moho y ácaros.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>💨 La velocidad del viento y el factor de sensación térmica</h3>
+                <p>
+                    El viento no cambia la temperatura real del aire, pero sí modifica cómo la percibimos. 
+                    A mayor velocidad del viento, mayor será la pérdida de calor corporal, haciendo que sintamos 
+                    más frío del que realmente hace. Este efecto se conoce como "sensación térmica" o "wind chill". 
+                    Por ejemplo, con una temperatura de 5°C y viento de 40 km/h, la sensación térmica puede bajar 
+                    hasta -3°C.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>🌧️ Tipos de precipitación</h3>
+                <p>
+                    La precipitación es cualquier forma de agua que cae de las nubes. Incluye lluvia (gotas líquidas), 
+                    llovizna (gotas muy finas), nieve (cristales de hielo), granizo (bolas de hielo) y aguanieve 
+                    (mezcla de lluvia y nieve). La intensidad se mide en milímetros por hora: leve (menos de 2 mm/h), 
+                    moderada (2-15 mm/h), fuerte (15-30 mm/h) y muy fuerte (más de 30 mm/h).
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>☀️ Índice UV y protección solar</h3>
+                <p>
+                    El índice ultravioleta (UV) mide la intensidad de la radiación solar. Va de 1 a 11+: bajo (1-2), 
+                    moderado (3-5), alto (6-7), muy alto (8-10) y extremo (11+). Con índice moderado o superior se 
+                    recomienda usar protector solar SPF 30+, gafas de sol, sombrero y buscar sombra entre las 10 AM 
+                    y 4 PM. La exposición prolongada sin protección puede causar quemaduras, envejecimiento prematuro 
+                    de la piel y aumentar el riesgo de cáncer de piel.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>🌪️ Fenómenos meteorológicos extremos</h3>
+                <p>
+                    Los eventos climáticos extremos incluyen huracanes, tornados, tormentas eléctricas severas, 
+                    olas de calor, olas de frío, sequías e inundaciones. Es crucial seguir las alertas 
+                    meteorológicas emitidas por organismos oficiales. En caso de alerta: mantén un kit de 
+                    emergencia, identifica rutas de evacuación, protege documentos importantes y mantente informado 
+                    a través de fuentes confiables.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>☔ Consejos para días lluviosos</h3>
+                <p>
+                    Llevar paraguas o impermeable, usar calzado antideslizante y evitar zonas inundadas 
+                    son medidas importantes para mantenerse seguro. Además, es recomendable salir con tiempo 
+                    extra, ya que la movilidad suele ser más lenta. Al conducir, reduce la velocidad, aumenta 
+                    la distancia de seguimiento y enciende las luces. Evita cruzar charcos profundos ya que 
+                    pueden ocultar huecos o corrientes peligrosas.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>🌡️ Temperaturas extremas y cuidados especiales</h3>
+                <p>
+                    En días de calor extremo (más de 35°C), hidrátate constantemente, evita la exposición directa 
+                    al sol, usa ropa ligera y de colores claros, y reduce la actividad física intensa. En frío 
+                    extremo (menos de 0°C), usa capas de ropa, protege extremidades con guantes y gorro, y limita 
+                    el tiempo en el exterior. Los grupos vulnerables incluyen niños, adultos mayores, embarazadas 
+                    y personas con enfermedades crónicas.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>💪 Impacto del clima en la salud</h3>
+                <p>
+                    El clima puede afectar nuestro bienestar físico y mental. El frío extremo aumenta 
+                    el riesgo de enfermedades respiratorias, mientras que el calor intenso puede causar 
+                    deshidratación y golpes de calor. Los cambios bruscos de temperatura debilitan el sistema 
+                    inmunológico. La presión atmosférica puede desencadenar migrañas en personas sensibles. 
+                    Mantenerse informado y tomar precauciones ayuda a prevenir riesgos para la salud.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <h3>🌍 Cambio climático: lo que debes saber</h3>
+                <p>
+                    El cambio climático está aumentando la frecuencia e intensidad de eventos meteorológicos extremos. 
+                    Las temperaturas promedio globales han aumentado aproximadamente 1.1°C desde la era preindustrial. 
+                    Esto provoca derretimiento de glaciares, aumento del nivel del mar, alteración de patrones de 
+                    lluvia y mayor riesgo de sequías e inundaciones. Acciones como reducir emisiones de carbono, 
+                    usar energías renovables y cuidar los recursos naturales son fundamentales para mitigar estos efectos.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Clima al Instante Pro. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        const CIUDADES_CLIMA = {
+    Madrid: { temperatura: 22, humedad: 60, condicion: "Soleado", viento: 15, sensacion: 21 },
+    Londres: { temperatura: 15, humedad: 80, condicion: "Nublado", viento: 18, sensacion: 13 },
+    París: { temperatura: 17, humedad: 70, condicion: "Parcialmente Nublado", viento: 14, sensacion: 16 },
+    Berlín: { temperatura: 16, humedad: 75, condicion: "Lluvioso", viento: 14, sensacion: 15 },
+    Roma: { temperatura: 21, humedad: 68, condicion: "Parcialmente Nublado", viento: 12, sensacion: 21 },
+    Ámsterdam: { temperatura: 15, humedad: 78, condicion: "Lluvioso", viento: 16, sensacion: 13 },
+    Lisboa: { temperatura: 23, humedad: 65, condicion: "Soleado", viento: 12, sensacion: 23 },
+    Estocolmo: { temperatura: 11, humedad: 75, condicion: "Nublado", viento: 15, sensacion: 9 },
+    Reikiavik: { temperatura: 7, humedad: 80, condicion: "Frío", viento: 20, sensacion: 4 },
+    Moscú: { temperatura: 10, humedad: 75, condicion: "Frío", viento: 22, sensacion: 7 },
+    Estambul: { temperatura: 19, humedad: 72, condicion: "Nublado", viento: 13, sensacion: 18 },
+    Dubái: { temperatura: 38, humedad: 55, condicion: "Caluroso", viento: 19, sensacion: 42 },
+    Tokio: { temperatura: 28, humedad: 65, condicion: "Soleado", viento: 8, sensacion: 29 },
+    Pekín: { temperatura: 24, humedad: 58, condicion: "Soleado", viento: 11, sensacion: 25 },
+    Seúl: { temperatura: 26, humedad: 60, condicion: "Soleado", viento: 10, sensacion: 27 },
+    Bangkok: { temperatura: 33, humedad: 75, condicion: "Caluroso", viento: 8, sensacion: 36 },
+    Singapur: { temperatura: 31, humedad: 80, condicion: "Húmedo", viento: 10, sensacion: 35 },
+    Johannesburgo: { temperatura: 22, humedad: 55, condicion: "Despejado", viento: 17, sensacion: 22 },
+    ElCairo: { temperatura: 34, humedad: 40, condicion: "Caluroso", viento: 20, sensacion: 36 },
+    Sydney: { temperatura: 23, humedad: 60, condicion: "Soleado", viento: 16, sensacion: 23 },
+    Honolulu: { temperatura: 29, humedad: 68, condicion: "Soleado", viento: 14, sensacion: 30 },
+    NuevaYork: { temperatura: 20, humedad: 55, condicion: "Lluvioso", viento: 20, sensacion: 18 },
+    LosÁngeles: { temperatura: 27, humedad: 50, condicion: "Soleado", viento: 9, sensacion: 27 },
+    Chicago: { temperatura: 17, humedad: 65, condicion: "Ventoso", viento: 25, sensacion: 15 },
+    Toronto: { temperatura: 14, humedad: 65, condicion: "Nublado", viento: 18, sensacion: 12 },
+    Vancouver: { temperatura: 18, humedad: 70, condicion: "Parcialmente Nublado", viento: 10, sensacion: 18 },
+    Montreal: { temperatura: 12, humedad: 68, condicion: "Lluvioso", viento: 15, sensacion: 10 },
+    Miami: { temperatura: 30, humedad: 75, condicion: "Húmedo", viento: 12, sensacion: 33 },
+    SanFrancisco: { temperatura: 22, humedad: 60, condicion: "Soleado", viento: 14, sensacion: 21 },
+    Dallas: { temperatura: 29, humedad: 55, condicion: "Caluroso", viento: 18, sensacion: 31 },
+    CiudadDeMéxico: { temperatura: 25, humedad: 70, condicion: "Parcialmente Nublado", viento: 12, sensacion: 24 },
+    Bogotá: { temperatura: 18, humedad: 85, condicion: "Nublado", viento: 10, sensacion: 17 },
+    Medellín: { temperatura: 22, humedad: 65, condicion: "Parcialmente Nublado", viento: 8, sensacion: 22 },
+    Cali: { temperatura: 27, humedad: 70, condicion: "Soleado", viento: 9, sensacion: 28 },
+    Caracas: { temperatura: 28, humedad: 70, condicion: "Soleado", viento: 9, sensacion: 29 },
+    Lima: { temperatura: 24, humedad: 75, condicion: "Soleado", viento: 13, sensacion: 24 },
+    Quito: { temperatura: 16, humedad: 80, condicion: "Lluvioso", viento: 11, sensacion: 15 },
+    Guayaquil: { temperatura: 30, humedad: 80, condicion: "Caluroso", viento: 10, sensacion: 33 },
+    Santiago: { temperatura: 18, humedad: 60, condicion: "Nublado", viento: 15, sensacion: 17 },
+    BuenosAires: { temperatura: 20, humedad: 68, condicion: "Parcialmente Nublado", viento: 14, sensacion: 19 },
+    Montevideo: { temperatura: 19, humedad: 70, condicion: "Nublado", viento: 13, sensacion: 18 },
+    Asunción: { temperatura: 31, humedad: 65, condicion: "Caluroso", viento: 10, sensacion: 33 },
+    LaPaz: { temperatura: 14, humedad: 55, condicion: "Despejado", viento: 18, sensacion: 12 },
+    SanJosé: { temperatura: 26, humedad: 75, condicion: "Parcialmente Nublado", viento: 11, sensacion: 27 },
+    CiudadDePanamá: { temperatura: 29, humedad: 85, condicion: "Húmedo", viento: 10, sensacion: 33 },
+    SanSalvador: { temperatura: 30, humedad: 65, condicion: "Soleado", viento: 12, sensacion: 31 },
+    Tegucigalpa: { temperatura: 27, humedad: 70, condicion: "Parcialmente Nublado", viento: 13, sensacion: 28 },
+    Managua: { temperatura: 31, humedad: 68, condicion: "Soleado", viento: 10, sensacion: 33 },
+    Guatemala: { temperatura: 24, humedad: 75, condicion: "Nublado", viento: 14, sensacion: 23 },
+    SantoDomingo: { temperatura: 32, humedad: 80, condicion: "Caluroso", viento: 15, sensacion: 36 },
+    SanJuan: { temperatura: 31, humedad: 78, condicion: "Húmedo", viento: 16, sensacion: 35 },
+    LaHabana: { temperatura: 29, humedad: 72, condicion: "Soleado", viento: 14, sensacion: 30 },
+    PuertoEspaña: { temperatura: 30, humedad: 75, condicion: "Soleado", viento: 13, sensacion: 33 }
+
+       };
+
+        let historial = [];
+        let ciudadesComparar = [];
+        let ciudadActual = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("clima-form");
+            const inputCiudad = document.getElementById("ciudad");
+            const btnBuscar = document.getElementById("btn-buscar");
+            const btnAgregarComparar = document.getElementById("btn-agregar-comparar");
+            const loading = document.getElementById("loading");
+            const errorMessage = document.getElementById("error-message");
+            const successMessage = document.getElementById("success-message");
+
+            // Autocompletar ciudades
+            const datalist = document.getElementById("ciudades-sugeridas");
+            Object.keys(CIUDADES_CLIMA).forEach(ciudad => {
+                const option = document.createElement("option");
+                option.value = ciudad;
+                datalist.appendChild(option);
+            });
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                await buscarClima();
+            });
+
+            btnAgregarComparar.addEventListener("click", () => {
+                if (ciudadActual) {
+                    agregarAComparar(ciudadActual);
+                } else {
+                    mostrarError("Primero busca una ciudad");
+                }
+            });
+
+            async function buscarClima() {
+                const ciudadBuscada = inputCiudad.value.trim();
+                if (!ciudadBuscada) {
+                    mostrarError("Por favor, ingresa el nombre de una ciudad.");
+                    return;
+                }
+
+                ocultarMensajes();
+                mostrarLoading(true);
+                btnBuscar.disabled = true;
+
+                try {
+                    const datosClima = await obtenerClima(ciudadBuscada);
+                    ciudadActual = datosClima;
+                    mostrarResultadoPrincipal(datosClima);
+                    generarPronostico(datosClima);
+                    agregarAHistorial(ciudadBuscada);
+                    inputCiudad.value = "";
+                } catch (error) {
+                    mostrarError(`No se encontró información para "${ciudadBuscada}". Intenta con otra ciudad.`);
+                    ciudadActual = null;
+                }
+
+                mostrarLoading(false);
+                btnBuscar.disabled = false;
+            }
+
+            function obtenerClima(ciudad) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const datos = CIUDADES_CLIMA[ciudad];
+                        if (datos) {
+                            resolve({ ciudad, ...datos });
+                        } else {
+                            reject("Ciudad no encontrada");
+                        }
+                    }, 800);
+                });
+            }
+
+            function mostrarResultadoPrincipal(datos) {
+                const container = document.getElementById("resultado-container");
+                container.innerHTML = `
+                    <div class="clima-card">
+                        <div class="clima-card-content">
+                            <div class="ciudad-nombre">${datos.ciudad}</div>
+                            <div class="temperatura-grande">${datos.temperatura}°C</div>
+                            <div class="condicion-clima">${datos.condicion}</div>
+                            
+                            <div class="detalles-grid">
+                                <div class="detalle-item">
+                                    <div class="detalle-label">💧 Humedad</div>
+                                    <div class="detalle-valor">${datos.humedad}%</div>
+                                </div>
+                                <div class="detalle-item">
+                                    <div class="detalle-label">💨 Viento</div>
+                                    <div class="detalle-valor">${datos.viento} km/h</div>
+                                </div>
+                                <div class="detalle-item">
+                                    <div class="detalle-label">🌡️ Sensación</div>
+                                    <div class="detalle-valor">${datos.sensacion}°C</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function generarPronostico(datos) {
+                const container = document.getElementById("pronostico-container");
+                const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                let html = '';
+
+                for (let i = 0; i < 7; i++) {
+                    const variacion = Math.floor(Math.random() * 6) - 3;
+                    const temp = datos.temperatura + variacion;
+                    html += `
+                        <div class="dia-card">
+                            <div class="dia-nombre">${dias[i]}</div>
+                            <div style="font-size: 2rem; margin: 0.5rem 0;">${obtenerIconoClima()}</div>
+                            <div class="dia-temp">${temp}°C</div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            }
+
+            function obtenerIconoClima() {
+                const iconos = ['☀️', '⛅', '☁️', '🌧️', '⛈️'];
+                return iconos[Math.floor(Math.random() * iconos.length)];
+            }
+
+            function agregarAHistorial(ciudad) {
+                if (!historial.includes(ciudad)) {
+                    historial.unshift(ciudad);
+                    if (historial.length > 5) historial.pop();
+                    actualizarHistorial();
+                }
+            }
+
+            function actualizarHistorial() {
+                const container = document.getElementById("historial-items");
+                if (historial.length === 0) {
+                    container.innerHTML = '<p style="color: #999;">No hay búsquedas recientes</p>';
+                    return;
+                }
+
+                container.innerHTML = historial.map(ciudad => `
+                    <div class="historial-chip" onclick="buscarDesdeHistorial('${ciudad}')">
+                        🌍 ${ciudad}
+                        <span class="remove" onclick="event.stopPropagation(); eliminarDeHistorial('${ciudad}')">✕</span>
+                    </div>
+                `).join('');
+            }
+
+            window.buscarDesdeHistorial = async (ciudad) => {
+                inputCiudad.value = ciudad;
+                await buscarClima();
+            };
+
+            window.eliminarDeHistorial = (ciudad) => {
+                historial = historial.filter(c => c !== ciudad);
+                actualizarHistorial();
+            };
+
+            function agregarAComparar(datos) {
+                if (ciudadesComparar.find(c => c.ciudad === datos.ciudad)) {
+                    mostrarError("Esta ciudad ya está en el comparador");
+                    return;
+                }
+
+                if (ciudadesComparar.length >= 4) {
+                    mostrarError("Máximo 4 ciudades en el comparador");
+                    return;
+                }
+
+                ciudadesComparar.push(datos);
+                actualizarComparador();
+                mostrarSuccess(`${datos.ciudad} agregada al comparador`);
+            }
+
+            function actualizarComparador() {
+                const container = document.getElementById("comparador-container");
+                
+                if (ciudadesComparar.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <p>Agrega ciudades para comparar sus climas</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = ciudadesComparar.map((ciudad, index) => `
+                    <div class="ciudad-comparar">
+                        <button class="remove-ciudad" onclick="eliminarDeComparador(${index})">✕</button>
+                        <h4>${ciudad.ciudad}</h4>
+                        <div class="temp-comparar">${ciudad.temperatura}°C</div>
+                        <p>${ciudad.condicion}</p>
+                        <p>💧 ${ciudad.humedad}%</p>
+                    </div>
+                `).join('');
+            }
+
+            window.eliminarDeComparador = (index) => {
+                ciudadesComparar.splice(index, 1);
+                actualizarComparador();
+            };
+
+            function mostrarLoading(mostrar) {
+                loading.style.display = mostrar ? "block" : "none";
+            }
+
+            function mostrarError(mensaje) {
+                errorMessage.textContent = mensaje;
+                errorMessage.style.display = "block";
+                setTimeout(() => errorMessage.style.display = "none", 5000);
+            }
+
+            function mostrarSuccess(mensaje) {
+                successMessage.textContent = mensaje;
+                successMessage.style.display = "block";
+                setTimeout(() => successMessage.style.display = "none", 3000);
+            }
+
+            function ocultarMensajes() {
+                errorMessage.style.display = "none";
+                successMessage.style.display = "none";
+            }
+        });
+    </script>
+
+</body>
+</html>
